@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 const categories = ["", "Construction", "Electrical", "Furniture", "Safety"];
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 function App() {
   const [filters, setFilters] = useState({
@@ -14,19 +16,19 @@ function App() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const fetchResults = async () => {
+  const fetchResults = async (customFilters = filters) => {
     setLoading(true);
     setError("");
 
     try {
       const params = new URLSearchParams();
 
-      if (filters.q.trim()) params.append("q", filters.q);
-      if (filters.category) params.append("category", filters.category);
-      if (filters.minPrice !== "") params.append("minPrice", filters.minPrice);
-      if (filters.maxPrice !== "") params.append("maxPrice", filters.maxPrice);
+      if (customFilters.q.trim()) params.append("q", customFilters.q);
+      if (customFilters.category) params.append("category", customFilters.category);
+      if (customFilters.minPrice !== "") params.append("minPrice", customFilters.minPrice);
+      if (customFilters.maxPrice !== "") params.append("maxPrice", customFilters.maxPrice);
 
-      const res = await fetch(`http://localhost:5000/search?${params.toString()}`);
+      const res = await fetch(`${API_BASE_URL}/search?${params.toString()}`);
       const data = await res.json();
 
       if (!res.ok) {
@@ -47,7 +49,7 @@ function App() {
   }, []);
 
   const handleChange = (e) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
       [e.target.name]: e.target.value
     }));
@@ -59,18 +61,15 @@ function App() {
   };
 
   const handleReset = () => {
-    setFilters({
+    const resetFilters = {
       q: "",
       category: "",
       minPrice: "",
       maxPrice: ""
-    });
+    };
+    setFilters(resetFilters);
     setError("");
-    setTimeout(() => {
-      fetch("http://localhost:5000/search")
-        .then(res => res.json())
-        .then(data => setResults(data));
-    }, 0);
+    fetchResults(resetFilters);
   };
 
   return (
@@ -91,7 +90,7 @@ function App() {
           value={filters.category}
           onChange={handleChange}
         >
-          {categories.map(cat => (
+          {categories.map((cat) => (
             <option key={cat} value={cat}>
               {cat || "All Categories"}
             </option>
@@ -140,7 +139,7 @@ function App() {
             </tr>
           </thead>
           <tbody>
-            {results.map(item => (
+            {results.map((item) => (
               <tr key={item.id}>
                 <td>{item.id}</td>
                 <td>{item.productName}</td>
